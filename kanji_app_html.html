@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="漢字マスター">
+    <title>漢字マスター - 小学3年生</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect } = React;
+
+        const KanjiLearningApp = () => {
+            const allKanjiData = [
+                { kanji: '詩', bushu: '言（ごんべん）', kakusu: '13画', onyomi: 'シ', onyomiExample: '詩を読んで楽しみました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '葉', bushu: '艹（くさかんむり）', kakusu: '12画', onyomi: 'ヨウ', onyomiExample: '植物の葉を集めて調べました。', kunyomi: 'は', kunyomiExample: '秋になると、木の葉が赤く色づきます。' },
+                { kanji: '習', bushu: '羽（はね）', kakusu: '11画', onyomi: 'シュウ', onyomiExample: '毎日学習をがんばります。', kunyomi: 'なら(う)', kunyomiExample: 'ピアノを習って上手になりたいです。' },
+                { kanji: '登', bushu: '癶（はつがしら）', kakusu: '12画', onyomi: 'トウ', onyomiExample: '山登りをして、広い世界を見ました。', kunyomi: 'のぼ(る)', kunyomiExample: '階だんを登って屋上に行きました。' },
+                { kanji: '物', bushu: '牛（うし）', kakusu: '8画', onyomi: 'ブツ', onyomiExample: '動物園でたくさんの動物を見ました。', kunyomi: 'もの', kunyomiExample: '部屋にあるものを全部かたづけました。' },
+                { kanji: '商', bushu: '口（くち）', kakusu: '11画', onyomi: 'ショウ', onyomiExample: '商店でお買い物をしました。', kunyomi: 'あきな(う)', kunyomiExample: 'お店で商いをしています。' },
+                { kanji: '館', bushu: '食（しょく）', kakusu: '16画', onyomi: 'カン', onyomiExample: '図書館で本をかりて読みました。', kunyomi: 'やかた', kunyomiExample: '古いやかたを見に行きました。' },
+                { kanji: '開', bushu: '門（もんがまえ）', kakusu: '12画', onyomi: 'カイ', onyomiExample: '運動会の開会式であいさつしました。', kunyomi: 'ひら(く)', kunyomiExample: 'ドアを開けると、明るくなりました。' },
+                { kanji: '動', bushu: '力（ちから）', kakusu: '11画', onyomi: 'ドウ', onyomiExample: '運動をすると体が元気になります。', kunyomi: 'うご(く)', kunyomiExample: '車が動いて走っています。' },
+                { kanji: '始', bushu: '女（おんな）', kakusu: '8画', onyomi: 'シ', onyomiExample: 'じゅ業の始まりの時間を守ります。', kunyomi: 'はじ(める)', kunyomiExample: '今日から新しいことを始めます。' },
+                { kanji: '辞', bushu: '辛（からい）', kakusu: '13画', onyomi: 'ジ', onyomiExample: '国語辞てんで意味を調べます。', kunyomi: 'や(める)', kunyomiExample: '古い仕事をやめて新しい仕事をします。' },
+                { kanji: '調', bushu: '言（ごんべん）', kakusu: '15画', onyomi: 'チョウ', onyomiExample: '図書館で調べ学習をしました。', kunyomi: 'しら(べる)', kunyomiExample: '分からないことを調べます。' },
+                { kanji: '由', bushu: '田（た）', kakusu: '5画', onyomi: 'ユウ', onyomiExample: 'おくれた理由を話しました。', kunyomi: 'よし', kunyomiExample: '名前のゆ来を調べました。' },
+                { kanji: '意', bushu: '心（こころ）', kakusu: '13画', onyomi: 'イ', onyomiExample: '友だちの意見を聞いて考えました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '味', bushu: '口（くち）', kakusu: '8画', onyomi: 'ミ', onyomiExample: 'このケーキはあまい味がします。', kunyomi: 'あじ', kunyomiExample: 'お母さんの作った物の味はさい高です。' },
+                { kanji: '伝', bushu: '人（にんべん）', kakusu: '6画', onyomi: 'デン', onyomiExample: '伝言を友だちに伝えました。', kunyomi: 'つた(える)', kunyomiExample: '大切なことを家ぞくに伝えます。' },
+                { kanji: '鉄', bushu: '金（かねへん）', kakusu: '13画', onyomi: 'テツ', onyomiExample: '鉄道に乗って旅行しました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '部', bushu: '邑（おおざと）', kakusu: '11画', onyomi: 'ブ', onyomiExample: 'サッカー部で毎日れん習しています。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '配', bushu: '酉（とりへん）', kakusu: '10画', onyomi: 'ハイ', onyomiExample: '新聞配たつの人が来ました。', kunyomi: 'くば(る)', kunyomiExample: 'プリントを配って、みんなにわたしました。' },
+                { kanji: '全', bushu: '人（ひと）', kakusu: '6画', onyomi: 'ゼン', onyomiExample: '安全に気をつけて道をわたります。', kunyomi: 'まった(く)', kunyomiExample: 'しゅくだいを全くやっていませんでした。' },
+                { kanji: '談', bushu: '言（ごんべん）', kakusu: '15画', onyomi: 'ダン', onyomiExample: '先生とそう談して、きめました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '緑', bushu: '糸（いとへん）', kakusu: '14画', onyomi: 'リョク', onyomiExample: '緑色の葉っぱがたくさんあります。', kunyomi: 'みどり', kunyomiExample: '春になると、緑がきれいです。' },
+                { kanji: '深', bushu: '水（さんずい）', kakusu: '11画', onyomi: 'シン', onyomiExample: '深夜までおきていたので、ねむいです。', kunyomi: 'ふか(い)', kunyomiExample: 'このプールは深いので気をつけます。' },
+                { kanji: '感', bushu: '心（こころ）', kakusu: '13画', onyomi: 'カン', onyomiExample: 'えい画を見て、感動しました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '想', bushu: '心（こころ）', kakusu: '13画', onyomi: 'ソウ', onyomiExample: '夏休みの思い出を作文に書きました。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '題', bushu: '頁（おおがい）', kakusu: '18画', onyomi: 'ダイ', onyomiExample: '問題がむずかしくて、とけませんでした。', kunyomi: '', kunyomiExample: '' },
+                { kanji: '横', bushu: '木（きへん）', kakusu: '15画', onyomi: 'オウ', onyomiExample: '横だん歩道をわたって学校に行きます。', kunyomi: 'よこ', kunyomiExample: '友だちの横にすわって、話をしました。' },
+                { kanji: '軽', bushu: '車（くるまへん）', kakusu: '12画', onyomi: 'ケイ', onyomiExample: '軽い荷物を持って出かけました。', kunyomi: 'かる(い)', kunyomiExample: 'このはこは軽いので、かんたんに運べます。' },
+                { kanji: '重', bushu: '里（さと）', kakusu: '9画', onyomi: 'ジュウ', onyomiExample: '重要なことをメモします。', kunyomi: 'おも(い)', kunyomiExample: 'この荷物は重いので、二人で運びます。' },
+                { kanji: '期', bushu: '月（つきへん）', kakusu: '12画', onyomi: 'キ', onyomiExample: '今日から新学期が始まります。', kunyomi: '', kunyomiExample: '' }
+            ];
+
+            const [kanjiData, setKanjiData] = useState([]);
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [stars, setStars] = useState(0);
+            const [activeCanvas, setActiveCanvas] = useState(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+
+            const canvasRefs = {
+                kunyomi: useRef(null),
+                bushu: useRef(null),
+                onyomi: useRef(null),
+                kunyomiExample: useRef(null),
+                kanji: useRef(null),
+                onyomiExample: useRef(null),
+                kakusu: useRef(null)
+            };
+
+            useEffect(() => {
+                const shuffled = [...allKanjiData].sort(() => Math.random() - 0.5);
+                setKanjiData(shuffled);
+            }, []);
+
+            const currentKanji = kanjiData.length > 0 ? kanjiData[currentIndex] : null;
+
+            useEffect(() => {
+                Object.values(canvasRefs).forEach(ref => {
+                    if (ref.current) {
+                        const canvas = ref.current;
+                        const ctx = canvas.getContext('2d');
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.lineWidth = 4;
+                        ctx.strokeStyle = '#333';
+                    }
+                });
+            }, []);
+
+            const startDrawing = (e, canvasName) => {
+                const canvas = canvasRefs[canvasName].current;
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+
+                let x, y;
+                if (e.type === 'touchstart') {
+                    e.preventDefault();
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                } else {
+                    x = e.clientX - rect.left;
+                    y = e.clientY - rect.top;
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                setIsDrawing(true);
+                setActiveCanvas(canvasName);
+            };
+
+            const draw = (e, canvasName) => {
+                if (!isDrawing || activeCanvas !== canvasName) return;
+
+                const canvas = canvasRefs[canvasName].current;
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                const rect = canvas.getBoundingClientRect();
+
+                let x, y;
+                if (e.type === 'touchmove') {
+                    e.preventDefault();
+                    x = e.touches[0].clientX - rect.left;
+                    y = e.touches[0].clientY - rect.top;
+                } else {
+                    x = e.clientX - rect.left;
+                    y = e.clientY - rect.top;
+                }
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => {
+                setIsDrawing(false);
+                setActiveCanvas(null);
+            };
+
+            const clearCanvas = (canvasName) => {
+                const canvas = canvasRefs[canvasName].current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            };
+
+            const clearAllCanvases = () => {
+                Object.keys(canvasRefs).forEach(key => {
+                    clearCanvas(key);
+                });
+            };
+
+            const nextKanji = () => {
+                if (currentIndex < kanjiData.length - 1) {
+                    setCurrentIndex(currentIndex + 1);
+                    setShowAnswer(false);
+                    clearAllCanvases();
+                }
+            };
+
+            const prevKanji = () => {
+                if (currentIndex > 0) {
+                    setCurrentIndex(currentIndex - 1);
+                    setShowAnswer(false);
+                    clearAllCanvases();
+                }
+            };
+
+            const toggleAnswer = () => {
+                if (!showAnswer) {
+                    setStars(stars + 1);
+                }
+                setShowAnswer(!showAnswer);
+            };
+
+            const WritableBox = ({ canvasName, label, bgColor, textColor, content, size = 'normal', rowSpan = 1, alwaysShow = false }) => {
+                const fontSize = size === 'large' ? 'text-6xl' : size === 'medium' ? 'text-2xl' : 'text-base';
+                const canvasSize = rowSpan === 2 ? 280 : 140;
+
+                return React.createElement('div', {
+                    className: `${bgColor} rounded-2xl p-4 flex flex-col shadow-lg transition-transform hover:scale-105 relative ${rowSpan === 2 ? 'row-span-2' : ''}`,
+                    style: { aspectRatio: rowSpan === 2 ? '1 / 2' : '1 / 1' }
+                },
+                    React.createElement('div', { className: `text-xs font-bold ${textColor} mb-2 text-center` }, label),
+                    React.createElement('div', { className: 'flex-1 relative flex items-center justify-center overflow-hidden' },
+                        (alwaysShow || showAnswer) && React.createElement('div', {
+                            className: `absolute inset-0 flex items-center justify-center pointer-events-none z-10 p-2`
+                        },
+                            React.createElement('div', {
+                                className: `${fontSize} font-bold text-white text-center ${rowSpan === 2 ? 'text-sm leading-relaxed' : ''}`
+                            }, content || 'なし')
+                        ),
+                        !alwaysShow && !showAnswer && React.createElement('div', {
+                            className: 'absolute inset-0 flex items-center justify-center pointer-events-none p-2'
+                        },
+                            React.createElement('div', {
+                                className: `${fontSize} font-bold text-white opacity-20 text-center ${rowSpan === 2 ? 'text-sm leading-relaxed' : ''}`
+                            }, content || 'なし')
+                        ),
+                        !alwaysShow && React.createElement('canvas', {
+                            ref: canvasRefs[canvasName],
+                            width: canvasSize,
+                            height: canvasSize,
+                            className: 'absolute inset-0 m-auto touch-none cursor-crosshair',
+                            onMouseDown: (e) => startDrawing(e, canvasName),
+                            onMouseMove: (e) => draw(e, canvasName),
+                            onMouseUp: stopDrawing,
+                            onMouseLeave: stopDrawing,
+                            onTouchStart: (e) => startDrawing(e, canvasName),
+                            onTouchMove: (e) => draw(e, canvasName),
+                            onTouchEnd: stopDrawing,
+                            style: { maxWidth: '100%', maxHeight: '100%' }
+                        })
+                    ),
+                    !alwaysShow && React.createElement('button', {
+                        onClick: () => clearCanvas(canvasName),
+                        className: 'absolute top-2 right-2 bg-white bg-opacity-80 rounded-full p-1.5 shadow hover:bg-opacity-100 transition-all z-20'
+                    }, '🗑️')
+                );
+            };
+
+            if (!currentKanji) {
+                return React.createElement('div', {
+                    className: 'min-h-screen bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 flex items-center justify-center'
+                },
+                    React.createElement('div', { className: 'text-white text-2xl' }, '読み込み中...')
+                );
+            }
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 p-4 flex items-center justify-center'
+            },
+                React.createElement('div', { className: 'max-w-4xl w-full' },
+                    React.createElement('div', { className: 'bg-white rounded-t-3xl shadow-2xl p-6 flex justify-between items-center' },
+                        React.createElement('div', { className: 'flex items-center gap-3' },
+                            React.createElement('span', { className: 'text-4xl' }, '📚'),
+                            React.createElement('h1', { className: 'text-3xl font-bold text-purple-600' }, '漢字マスター')
+                        ),
+                        React.createElement('div', { className: 'flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-full' },
+                            React.createElement('span', { className: 'text-2xl' }, '⭐'),
+                            React.createElement('span', { className: 'text-xl font-bold text-yellow-700' }, stars)
+                        )
+                    ),
+                    React.createElement('div', { className: 'bg-white shadow-2xl p-8' },
+                        React.createElement('div', { className: 'mb-6 text-center' },
+                            React.createElement('p', { className: 'text-lg font-semibold text-purple-700' }, '真ん中の漢字を見て、まわりのマスに書いてみよう！'),
+                            React.createElement('p', { className: 'text-sm text-gray-600 mt-1' }, '右上の消しゴムマークで消せるよ')
+                        ),
+                        React.createElement('div', { className: 'grid grid-cols-3 gap-4 max-w-3xl mx-auto' },
+                            React.createElement(WritableBox, { canvasName: 'kunyomi', label: '訓読み', bgColor: 'bg-gradient-to-br from-green-300 to-green-400', textColor: 'text-green-800', content: currentKanji.kunyomi, size: 'medium' }),
+                            React.createElement(WritableBox, { canvasName: 'bushu', label: '部首', bgColor: 'bg-gradient-to-br from-yellow-300 to-yellow-400', textColor: 'text-yellow-800', content: currentKanji.bushu, size: 'normal' }),
+                            React.createElement(WritableBox, { canvasName: 'onyomi', label: '音読み', bgColor: 'bg-gradient-to-br from-blue-300 to-blue-400', textColor: 'text-blue-800', content: currentKanji.onyomi, size: 'medium' }),
+                            React.createElement(WritableBox, { canvasName: 'kunyomiExample', label: '訓読みの例文', bgColor: 'bg-gradient-to-br from-green-200 to-green-300', textColor: 'text-green-900', content: currentKanji.kunyomiExample, size: 'small', rowSpan: 2 }),
+                            React.createElement(WritableBox, { canvasName: 'kanji', label: '', bgColor: 'bg-gradient-to-br from-purple-400 to-pink-400', textColor: 'text-purple-800', content: currentKanji.kanji, size: 'large', alwaysShow: true }),
+                            React.createElement(WritableBox, { canvasName: 'onyomiExample', label: '音読みの例文', bgColor: 'bg-gradient-to-br from-blue-200 to-blue-300', textColor: 'text-blue-900', content: currentKanji.onyomiExample, size: 'small', rowSpan: 2 }),
+                            React.createElement(WritableBox, { canvasName: 'kakusu', label: '画数', bgColor: 'bg-gradient-to-br from-orange-300 to-orange-400', textColor: 'text-orange-800', content: currentKanji.kakusu, size: 'medium' })
+                        ),
+                        React.createElement('div', { className: 'flex justify-center gap-4 mt-8' },
+                            React.createElement('button', {
+                                onClick: clearAllCanvases,
+                                className: 'flex items-center gap-2 bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all'
+                            }, '🗑️ 全部消す'),
+                            React.createElement('button', {
+                                onClick: toggleAnswer,
+                                className: 'flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold py-4 px-8 rounded-full text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all'
+                            }, showAnswer ? '👁️ 答えを隠す' : '👁️ 答えを見る！')
+                        )
+                    ),
+                    React.createElement('div', { className: 'bg-white rounded-b-3xl shadow-2xl p-6 flex justify-between items-center' },
+                        React.createElement('button', {
+                            onClick: prevKanji,
+                            disabled: currentIndex === 0,
+                            className: `flex items-center gap-2 px-6 py-3 rounded-full font-bold text-lg transition-all ${currentIndex === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 shadow-lg'}`
+                        }, '◀ まえへ'),
+                        React.createElement('div', { className: 'text-lg font-bold text-gray-700' }, `${currentIndex + 1} / ${kanjiData.length}`),
+                        React.createElement('button', {
+                            onClick: nextKanji,
+                            disabled: currentIndex === kanjiData.length - 1,
+                            className: `flex items-center gap-2 px-6 py-3 rounded-full font-bold text-lg transition-all ${currentIndex === kanjiData.length - 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 shadow-lg'}`
+                        }, 'つぎへ ▶')
+                    )
+                )
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(KanjiLearningApp));
+    </script>
+</body>
+</html>
