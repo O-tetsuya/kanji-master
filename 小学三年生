@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>漢字マスター</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title { font-size: 28px; color: #7c3aed; }
+        .stars {
+            background: #fef3c7;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .main { background: white; padding: 30px; }
+        .info { text-align: center; margin-bottom: 20px; color: #7c3aed; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .box {
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+        }
+        .box.tall { grid-row: span 2; min-height: 320px; }
+        .label { font-size: 12px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .text {
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            z-index: 5;
+            position: relative;
+        }
+        .size-xl { font-size: 60px; }
+        .size-lg { font-size: 28px; }
+        .size-sm { font-size: 14px; line-height: 1.6; }
+        .hint { opacity: 0.2; }
+        canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .clear-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+        }
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+        .btn-red { background: #ef4444; }
+        .btn-blue { background: #3b82f6; }
+        .footer {
+            background: white;
+            padding: 20px;
+            border-radius: 0 0 20px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        .nav:disabled {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .counter { font-size: 18px; font-weight: bold; }
+        .bg-green { background: linear-gradient(135deg, #86efac, #4ade80); }
+        .bg-yellow { background: linear-gradient(135deg, #fde047, #facc15); }
+        .bg-blue { background: linear-gradient(135deg, #93c5fd, #60a5fa); }
+        .bg-purple { background: linear-gradient(135deg, #c084fc, #a855f7); }
+        .bg-orange { background: linear-gradient(135deg, #fdba74, #fb923c); }
+        .bg-green-light { background: linear-gradient(135deg, #bbf7d0, #86efac); }
+        .bg-blue-light { background: linear-gradient(135deg, #bfdbfe, #93c5fd); }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div class="title">📚 漢字マスター</div>
+            <div class="stars">⭐ <span id="stars">0</span></div>
+        </div>
+        <div class="main">
+            <div class="info">真ん中の漢字を見て、まわりのマスに書いてみよう！</div>
+            <div class="grid" id="grid"></div>
+            <div class="buttons">
+                <button class="btn btn-red" onclick="clearAll()">🗑️ 全部消す</button>
+                <button class="btn btn-blue" onclick="toggleAnswer()" id="answerBtn">👁️ 答えを見る！</button>
+            </div>
+        </div>
+        <div class="footer">
+            <button class="nav" id="prev" onclick="prev()">◀ まえへ</button>
+            <div class="counter" id="counter"></div>
+            <button class="nav" id="next" onclick="next()">つぎへ ▶</button>
+        </div>
+    </div>
+
+    <script>
+        const data = [
+            {k:'詩',b:'言',s:'13画',o:'シ',oe:'詩を読んで楽しみました。',u:'',ue:''},
+            {k:'葉',b:'艹',s:'12画',o:'ヨウ',oe:'植物の葉を集めて調べました。',u:'は',ue:'秋になると、木の葉が赤く色づきます。'},
+            {k:'習',b:'羽',s:'11画',o:'シュウ',oe:'毎日学習をがんばります。',u:'なら(う)',ue:'ピアノを習って上手になりたいです。'},
+            {k:'登',b:'癶',s:'12画',o:'トウ',oe:'山登りをして、広い世界を見ました。',u:'のぼ(る)',ue:'階だんを登って屋上に行きました。'},
+            {k:'物',b:'牛',s:'8画',o:'ブツ',oe:'動物園でたくさんの動物を見ました。',u:'もの',ue:'部屋にあるものを全部かたづけました。'},
+            {k:'商',b:'口',s:'11画',o:'ショウ',oe:'商店でお買い物をしました。',u:'あきな(う)',ue:'お店で商いをしています。'},
+            {k:'館',b:'食',s:'16画',o:'カン',oe:'図書館で本をかりて読みました。',u:'やかた',ue:'古いやかたを見に行きました。'},
+            {k:'開',b:'門',s:'12画',o:'カイ',oe:'運動会の開会式であいさつしました。',u:'ひら(く)',ue:'ドアを開けると、明るくなりました。'},
+            {k:'動',b:'力',s:'11画',o:'ドウ',oe:'運動をすると体が元気になります。',u:'うご(く)',ue:'車が動いて走っています。'},
+            {k:'始',b:'女',s:'8画',o:'シ',oe:'じゅ業の始まりの時間を守ります。',u:'はじ(める)',ue:'今日から新しいことを始めます。'},
+            {k:'辞',b:'辛',s:'13画',o:'ジ',oe:'国語辞てんで意味を調べます。',u:'や(める)',ue:'古い仕事をやめて新しい仕事をします。'},
+            {k:'調',b:'言',s:'15画',o:'チョウ',oe:'図書館で調べ学習をしました。',u:'しら(べる)',ue:'分からないことを調べます。'},
+            {k:'由',b:'田',s:'5画',o:'ユウ',oe:'おくれた理由を話しました。',u:'よし',ue:'名前のゆ来を調べました。'},
+            {k:'意',b:'心',s:'13画',o:'イ',oe:'友だちの意見を聞いて考えました。',u:'',ue:''},
+            {k:'味',b:'口',s:'8画',o:'ミ',oe:'このケーキはあまい味がします。',u:'あじ',ue:'お母さんの作った物の味はさい高です。'},
+            {k:'伝',b:'人',s:'6画',o:'デン',oe:'伝言を友だちに伝えました。',u:'つた(える)',ue:'大切なことを家ぞくに伝えます。'},
+            {k:'鉄',b:'金',s:'13画',o:'テツ',oe:'鉄道に乗って旅行しました。',u:'',ue:''},
+            {k:'部',b:'邑',s:'11画',o:'ブ',oe:'サッカー部で毎日れん習しています。',u:'',ue:''},
+            {k:'配',b:'酉',s:'10画',o:'ハイ',oe:'新聞配たつの人が来ました。',u:'くば(る)',ue:'プリントを配って、みんなにわたしました。'},
+            {k:'全',b:'人',s:'6画',o:'ゼン',oe:'安全に気をつけて道をわたります。',u:'まった(く)',ue:'しゅくだいを全くやっていませんでした。'},
+            {k:'談',b:'言',s:'15画',o:'ダン',oe:'先生とそう談して、きめました。',u:'',ue:''},
+            {k:'緑',b:'糸',s:'14画',o:'リョク',oe:'緑色の葉っぱがたくさんあります。',u:'みどり',ue:'春になると、緑がきれいです。'},
+            {k:'深',b:'水',s:'11画',o:'シン',oe:'深夜までおきていたので、ねむいです。',u:'ふか(い)',ue:'このプールは深いので気をつけます。'},
+            {k:'感',b:'心',s:'13画',o:'カン',oe:'えい画を見て、感動しました。',u:'',ue:''},
+            {k:'想',b:'心',s:'13画',o:'ソウ',oe:'夏休みの思い出を作文に書きました。',u:'',ue:''},
+            {k:'題',b:'頁',s:'18画',o:'ダイ',oe:'問題がむずかしくて、とけませんでした。',u:'',ue:''},
+            {k:'横',b:'木',s:'15画',o:'オウ',oe:'横だん歩道をわたって学校に行きます。',u:'よこ',ue:'友だちの横にすわって、話をしました。'},
+            {k:'軽',b:'車',s:'12画',o:'ケイ',oe:'軽い荷物を持って出かけました。',u:'かる(い)',ue:'このはこは軽いので、かんたんに運べます。'},
+            {k:'重',b:'里',s:'9画',o:'ジュウ',oe:'重要なことをメモします。',u:'おも(い)',ue:'この荷物は重いので、二人で運びます。'},
+            {k:'期',b:'月',s:'12画',o:'キ',oe:'今日から新学期が始まります。',u:'',ue:''}
+        ];
+
+        let list = data.sort(() => Math.random() - 0.5);
+        let idx = 0;
+        let show = false;
+        let star = 0;
+        let cvs = {};
+        let draw = false;
+        let active = null;
+
+        function render() {
+            const d = list[idx];
+            const g = document.getElementById('grid');
+            g.innerHTML = `
+                <div class="box bg-green">
+                    <div class="label">訓読み</div>
+                    <div class="content">
+                        <div class="text size-lg ${show?'':'hint'}" id="t1">${d.u||'なし'}</div>
+                        <canvas id="c1" width="140" height="140"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c1')">🗑️</button>
+                </div>
+                <div class="box bg-yellow">
+                    <div class="label">部首</div>
+                    <div class="content">
+                        <div class="text size-lg ${show?'':'hint'}" id="t2">${d.b}</div>
+                        <canvas id="c2" width="140" height="140"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c2')">🗑️</button>
+                </div>
+                <div class="box bg-blue">
+                    <div class="label">音読み</div>
+                    <div class="content">
+                        <div class="text size-lg ${show?'':'hint'}" id="t3">${d.o}</div>
+                        <canvas id="c3" width="140" height="140"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c3')">🗑️</button>
+                </div>
+                <div class="box bg-green-light tall">
+                    <div class="label">訓読みの例文</div>
+                    <div class="content">
+                        <div class="text size-sm ${show?'':'hint'}" id="t4">${d.ue||'なし'}</div>
+                        <canvas id="c4" width="140" height="300"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c4')">🗑️</button>
+                </div>
+                <div class="box bg-purple">
+                    <div class="label"></div>
+                    <div class="content">
+                        <div class="text size-xl">${d.k}</div>
+                    </div>
+                </div>
+                <div class="box bg-blue-light tall">
+                    <div class="label">音読みの例文</div>
+                    <div class="content">
+                        <div class="text size-sm ${show?'':'hint'}" id="t5">${d.oe}</div>
+                        <canvas id="c5" width="140" height="300"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c5')">🗑️</button>
+                </div>
+                <div class="box bg-orange">
+                    <div class="label">画数</div>
+                    <div class="content">
+                        <div class="text size-lg ${show?'':'hint'}" id="t6">${d.s}</div>
+                        <canvas id="c6" width="140" height="140"></canvas>
+                    </div>
+                    <button class="clear-btn" onclick="clear('c6')">🗑️</button>
+                </div>
+            `;
+            
+            ['c1','c2','c3','c4','c5','c6'].forEach(id => {
+                const c = document.getElementById(id);
+                cvs[id] = c;
+                const ctx = c.getContext('2d');
+                ctx.lineCap = 'round';
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#333';
+                
+                c.onmousedown = c.ontouchstart = (e) => {
+                    e.preventDefault();
+                    const r = c.getBoundingClientRect();
+                    const x = (e.touches?.[0]||e).clientX - r.left;
+                    const y = (e.touches?.[0]||e).clientY - r.top;
+                    ctx.beginPath();
+                    ctx.moveTo(x,y);
+                    draw = true;
+                    active = id;
+                };
+                
+                c.onmousemove = c.ontouchmove = (e) => {
+                    if(!draw || active !== id) return;
+                    e.preventDefault();
+                    const r = c.getBoundingClientRect();
+                    const x = (e.touches?.[0]||e).clientX - r.left;
+                    const y = (e.touches?.[0]||e).clientY - r.top;
+                    ctx.lineTo(x,y);
+                    ctx.stroke();
+                };
+                
+                c.onmouseup = c.onmouseleave = c.ontouchend = () => {
+                    draw = false;
+                    active = null;
+                };
+            });
+            
+            update();
+        }
+
+        function update() {
+            document.getElementById('counter').textContent = `${idx+1} / ${list.length}`;
+            document.getElementById('prev').disabled = idx === 0;
+            document.getElementById('next').disabled = idx === list.length-1;
+            document.getElementById('stars').textContent = star;
+        }
+
+        function clear(id) {
+            const c = cvs[id];
+            const ctx = c.getContext('2d');
+            ctx.clearRect(0, 0, c.width, c.height);
+        }
+
+        function clearAll() {
+            Object.keys(cvs).forEach(clear);
+        }
+
+        function toggleAnswer() {
+            show = !show;
+            if(show) star++;
+            ['t1','t2','t3','t4','t5','t6'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.className = el.className.replace('hint','') + (show?'':' hint');
+            });
+            document.getElementById('answerBtn').textContent = show ? '👁️ 答えを隠す' : '👁️ 答えを見る！';
+            update();
+        }
+
+        function next() {
+            if(idx < list.length-1) {
+                idx++;
+                show = false;
+                render();
+            }
+        }
+
+        function prev() {
+            if(idx > 0) {
+                idx--;
+                show = false;
+                render();
+            }
+        }
+
+        render();
+    </script>
+</body>
+</html>
